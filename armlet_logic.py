@@ -193,9 +193,9 @@ def should_toggle_armlet(payload: dict[str, Any], settings: Settings) -> dict[st
 
     # --- Decisión ---
     if _armlet_active:
-        deactivate_hp = int(max_health * settings.deactivate_threshold_pct)
+        deactivate_threshold = int(max_health * settings.ARMLET_DEACTIVATE_THRESHOLD)
         taking_damage = delta_hp < -int(max_health * settings.combat_delta_pct)
-        if health >= deactivate_hp and not taking_damage and can_act:
+        if health >= deactivate_threshold and not taking_damage and can_act:
             _pending_confirm = True
             _pre_action_max_health = max_health
             _last_action_time = now

@@ -5,6 +5,8 @@ logger = logging.getLogger(__name__)
 
 
 class Settings:
+    ARMLET_DEACTIVATE_THRESHOLD: float = float(os.getenv("ARMLET_DEACTIVATE_THRESHOLD", "0.60"))
+
     def __init__(self) -> None:
         raw_threshold = os.environ.get("ARMLET_THRESHOLD", "0.25")
         raw_key = os.environ.get("ARMLET_KEY", "1")
@@ -40,11 +42,7 @@ class Settings:
             logger.warning("ARMLET_TOGGLE_MIN_INTERVAL muy bajo (min 0.5s), usando default 1.0")
             self.toggle_min_interval = 1.0
 
-        raw_deactivate_threshold = os.environ.get("ARMLET_DEACTIVATE_THRESHOLD", "0.60")
-        self.deactivate_threshold_pct: float = self._parse_float(raw_deactivate_threshold, 0.60)
-        if not (0.50 <= self.deactivate_threshold_pct <= 0.90):
-            logger.warning("ARMLET_DEACTIVATE_THRESHOLD out of range [0.50, 0.90], using default 0.60")
-            self.deactivate_threshold_pct = 0.60
+        # clase Settings.ARMLET_DEACTIVATE_THRESHOLD se lee del env en la línea de clase
 
     def threshold_hp(self, max_health: int) -> int:
         return int(max_health * self.threshold)
