@@ -12,8 +12,6 @@ CONFIRM_TIMEOUT_SECONDS = 0.8
 CONFIRM_RETRY_SECONDS = 0.35
 EXTERNAL_GRACE_SECONDS = 1.0
 EXTERNAL_GRACE_SECONDS_CRITICAL = 0.15
-PANIC_THRESHOLD = 0.05
-
 _armlet_active: bool = False
 _last_health: int | None = None
 _passive_anchor: int | None = None
@@ -149,6 +147,7 @@ def should_toggle_armlet(payload: dict[str, Any], settings: Settings) -> dict[st
             _passive_anchor = max_health
     elif max_health == _passive_last_seen:
         _passive_anchor = max_health
+        _passive_last_seen = max_health
 
     _passive_last_seen = max_health
 
@@ -170,7 +169,7 @@ def should_toggle_armlet(payload: dict[str, Any], settings: Settings) -> dict[st
     taking_massive_damage = delta_hp < -int(max_health * settings.combat_delta_pct)
 
     # Caso 1: armlet ON, HP bajo threshold → iniciar combo apagando
-    if _armlet_active and health < hp_threshold and not taking_massive_damage and can_act:
+    if _armlet_active and health < hp_threshold and can_act:
         _pending_confirm = True
         _combo_mode = True
         _pre_action_max_health = max_health
@@ -194,9 +193,9 @@ def should_toggle_armlet(payload: dict[str, Any], settings: Settings) -> dict[st
 
     # --- Decisión ---
     if _armlet_active:
-        deactivate_threshold = int(max_health * 0.60)
+        deactivate_hp = int(max_health * settings.deactivate_threshold_pct)
         taking_damage = delta_hp < -int(max_health * settings.combat_delta_pct)
-        if health >= deactivate_threshold and not taking_damage and can_act:
+        if health >= deactivate_hp and not taking_damage and can_act:
             _pending_confirm = True
             _pre_action_max_health = max_health
             _last_action_time = now

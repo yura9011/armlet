@@ -377,36 +377,33 @@ class TestShouldToggleArmlet:
         r = should_toggle_armlet(_make_payload(500, 1000), settings)
         assert armlet_logic._combo_mode is False
 
-    def test_panic_combo_not_triggered_during_massive_damage(self):
-        """Don't trigger panic combo if taking massive damage burst."""
+    def test_panic_combo_triggers_during_massive_damage(self):
+        """Panic combo fires even during massive damage burst (no guard)."""
         settings = _make_settings(threshold=0.25)
         _seed(settings)
 
-        # Simulate massive damage: lost 300 HP in one tick (> 5% of 1550)
         armlet_logic._armlet_active = True
         armlet_logic._passive_anchor = 1550
         armlet_logic._last_health = 500
         armlet_logic._last_action_time = None
 
-        # HP below threshold but taking massive damage → don't combo
         r = should_toggle_armlet(_make_payload(200, 1550), settings)
-        assert r["action"] == "none"
-        assert r["reason"] == "keeping_active"
-        assert armlet_logic._combo_mode is False
+        assert r["action"] == "deactivate"
+        assert r["reason"] == "panic_combo_off"
+        assert armlet_logic._combo_mode is True
 
-    def test_panic_combo_interrupted_by_external_toggle(self):
-        """If player manually toggles during combo, combo is cancelled."""
+    def test_panic_combo_external_toggle_does_not_block_combo(self):
+        """External toggle activates armlet, but panic combo still fires on same tick."""
         armlet_logic.EXTERNAL_GRACE_SECONDS = 0.0
         armlet_logic.EXTERNAL_GRACE_SECONDS_CRITICAL = 0.0
         settings = _make_settings(threshold=0.25)
         _seed(settings)
 
-        # Start combo mid-state
         armlet_logic._armlet_active = False
         armlet_logic._combo_mode = True
         armlet_logic._passive_anchor = 1000
 
-        # External toggle (player activates manually)
         r = should_toggle_armlet(_make_payload(200, 1550), settings)
-        assert armlet_logic._combo_mode is False
+        assert r["action"] == "deactivate"
+        assert r["reason"] == "panic_combo_off"
         assert armlet_logic._armlet_active is True
